@@ -13,12 +13,15 @@ ogbconn = mysql.connector.connect(
 )
 ogbc = ogbconn.cursor()
 
-event_id = 306
+event_id = 305
 field_list = []
 orders = []
-orders_columns = ['報名序號', '活動名稱', '報名日期', '報名狀態', '付款狀態', '付款金額']
+orders_columns = ['報名序號', '活動名稱', '報名日期', '報名狀態', '付款狀態', '付款金額', '付款方式', '匯款末5碼']
 options = {}
 option_list = []
+pay_method = {0: 'Line Pay',
+              1: '刷卡',
+              8: '匯款'}
 order_status = {0: '候補',
                 1: '報名失敗',
                 2: '報名成功',
@@ -94,11 +97,13 @@ for r in ogbc.fetchall():
 # get orders from event id
 sql = f'''
 SELECT 
-    eo.id, eo.created_at, eo.order_status, eo.pay_status, eo.pay_total, ea.base_info
+    eo.id, eo.created_at, eo.order_status, eo.pay_status, eo.pay_total, eo.pay_method, eot.trans_5_no, ea.base_info
 FROM
     OneGoBoLine.event_order AS eo
         JOIN
     OneGoBoLine.event_attendees AS ea ON eo.id = ea.event_order_id
+        LEFT JOIN
+    OneGoBoLine.event_order_transfer_code AS eot ON eot.event_order_id = eo.id
 WHERE
     eo.events_id = {event_id}
 ORDER BY eo.id ASC
@@ -106,8 +111,9 @@ ORDER BY eo.id ASC
 '''
 ogbc.execute(sql)
 for r in ogbc.fetchall():
-    order_info = [r[0], event_title, r[1], order_status.get(r[2], r[2]), pay_status.get(r[3], r[3]), r[4]]
-    base_info = json.loads(r[5])
+    order_info = [r[0], event_title, r[1], order_status.get(r[2], r[2]), pay_status.get(r[3], r[3]),
+                  r[4], pay_method.get(r[5], r[5]), r[6]]
+    base_info = json.loads(r[-1])
     for b in field_list:
         order_info.append(base_info.get(b, ''))
     # append options count with 0        
