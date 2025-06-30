@@ -254,7 +254,7 @@ for sheet in stockWB.sheetnames:
     ws = stockWB[sheet]
     stockWB.remove(ws)
 
-
+allDateMonthList = set()
 for tName, target in targetMapping:
     wb = load_workbook(os.path.join(cPath, target.fname))
     dateMonthList = set()
@@ -515,7 +515,7 @@ for tName, target in targetMapping:
         for i in range(usedListLen):
             ws.cell(row=r, column=i + 1).value = usedInfo[tName][r - 2][i]
 
-
+    allDateMonthList.update(dateMonthList)
     # stock by month
     #                   0        1        2          3                  4             5          6          7          8           9           10          11            12           13          14
     stockTitles = ['分類/單位', '品名', '進貨', '當月進貨平均成本', '當月進貨總成本', '門診銷量', '住院銷量', '手術銷量', '無銷量來源', '總銷量', '銷貨平均成本', '銷貨總成本', '庫存量', '庫存平均成本', '庫存總成本']
@@ -657,7 +657,7 @@ for tName, target in targetMapping:
                 ws.cell(row=r, column=i + 1).value = itemData[i]
             r += 1
 
-                        # 月總表記錄
+            # 月總表記錄
             ofs = mOffset[tName]
             mStatistic[dateMonth][ofs] += item.get(PCOUNT, 0)
             mStatistic[dateMonth][ofs + 1] += item.get(TCOST, 0)
@@ -711,7 +711,8 @@ pYear = ''
 
 yearSum = [0] * 18
 r = 2
-for dateMonth in dateMonthList:
+allDateMonthList = sorted(list(allDateMonthList))
+for dateMonth in allDateMonthList:
     year, month = dateMonth.split('-')
     if year != pYear:
         pYear = year
@@ -767,7 +768,7 @@ for sheet in wb.sheetnames:
     wb.remove(ws)
 
 
-for dateMonth in dateMonthList:
+for dateMonth in allDateMonthList:
     sheetName = f'{dateMonth}'
     r = 2
     wb.create_sheet(sheetName)
